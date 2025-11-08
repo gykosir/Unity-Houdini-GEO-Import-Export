@@ -1,0 +1,29 @@
+{
+  "name": "com.gykosir.houdini-geo-import-export",
+  "version": "1.0.1",
+  "displayName": "Houdini GEO Import/Export",
+  "description": "Import/export of Houdini .geo in Unity. Points + attributes roundtrip.",
+  "unity": "2021.3",
+  "keywords": ["houdini", "geo", "import", "export", "procedural"],
+  "author": {
+    "name": "Fork by gykosir (orig. Waldo Bronchart & Roy Theunissen)",
+    "url": "https://github.com/gykosir/Unity-Houdini-GEO-Import-Export"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gykosir/Unity-Houdini-GEO-Import-Export.git"
+  },
+  "documentationUrl": "https://github.com/gykosir/Unity-Houdini-GEO-Import-Export#readme",
+  "changelogUrl": "https://github.com/gykosir/Unity-Houdini-GEO-Import-Export/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/gykosir/Unity-Houdini-GEO-Import-Export/blob/main/LICENSE",
+  "samples": [
+    {
+      "displayName": "Example Scenes",
+      "description": "Minimal .geo import/export usage.",
+      "path": "Samples~/ExampleScenes"
+    }
+  ],
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.0.2"
+  }
+}
