@@ -29,7 +29,7 @@ namespace Houdini.GeoImportExport
         [Serializable]
         private class AttributeOptions
         {
-            public AttributeOptionsType type = new AttributeOptionsType();
+            public AttributeOptionsType type = new();
 
             public AttributeOptions(string type, string value)
             {
@@ -38,8 +38,8 @@ namespace Houdini.GeoImportExport
             }
         }
 
-        private static readonly Dictionary<string, AttributeOptions> attributeOptionsByName =
-            new Dictionary<string, AttributeOptions>
+        private static readonly Dictionary<string, AttributeOptions> AttributeOptionsByName =
+            new()
             {
                 { "P", new AttributeOptions("string", "point") },
                 { "N", new AttributeOptions("string", "normal") },
@@ -48,11 +48,11 @@ namespace Houdini.GeoImportExport
         
         private const string DateFormat = "yyyy-MM-d HH:mm:ss";
         
-        private static StringWriter stringWriter;
-        private static JsonTextWriterAdvanced writer;
+        private static StringWriter _stringWriter;
+        private static JsonTextWriterAdvanced _writer;
 
-        private static string path;
-        private static HoudiniGeo data;
+        private static string _path;
+        private static HoudiniGeo _data;
 
         public static void Export(HoudiniGeo data, string path = null)
         {
@@ -72,20 +72,20 @@ namespace Houdini.GeoImportExport
                 path = Path.Combine(Application.dataPath, path);
 
             // Make sure it ends with the Houdini extension.
-            path = Path.ChangeExtension(path, HoudiniGeo.EXTENSION);
+            path = Path.ChangeExtension(path, HoudiniGeo.Extension);
 
             // Clean up the path a little.
             path = path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-            HoudiniGeoFileExporter.path = path;
+            HoudiniGeoFileExporter._path = path;
             
-            stringWriter = new StringWriter();
-            stringWriter = new StringWriter();
-            writer = new JsonTextWriterAdvanced(stringWriter);
-            writer.DateFormatString = DateFormat;
-            writer.Formatting = Formatting.Indented;
-            writer.IndentChar = '\t';
-            HoudiniGeoFileExporter.data = data;
+            _stringWriter = new StringWriter();
+            _stringWriter = new StringWriter();
+            _writer = new JsonTextWriterAdvanced(_stringWriter);
+            _writer.DateFormatString = DateFormat;
+            _writer.Formatting = Formatting.Indented;
+            _writer.IndentChar = '\t';
+            HoudiniGeoFileExporter._data = data;
 
             WriteData();
 
@@ -94,7 +94,7 @@ namespace Houdini.GeoImportExport
 
         private static void WriteData()
         {
-            Dictionary<string, object> dictionary = new Dictionary<string, object>();
+            var dictionary = new Dictionary<string, object>();
             
             AddFileInfoToDictionary(dictionary);
 
@@ -106,18 +106,18 @@ namespace Houdini.GeoImportExport
             
             AddPointGroupsToDictionary(dictionary);
             
-            writer.WriteValue(dictionary);
+            _writer.WriteValue(dictionary);
         }
 
         private static void AddFileInfoToDictionary(Dictionary<string, object> dictionary)
         {
-            dictionary.Add("fileversion", data.fileVersion);
-            dictionary.Add("hasindex", data.hasIndex);
-            dictionary.Add("pointcount", data.pointCount);
-            dictionary.Add("vertexcount", data.vertexCount);
-            dictionary.Add("primitivecount", data.primCount);
+            dictionary.Add("fileversion", _data.fileVersion);
+            dictionary.Add("hasindex", _data.hasIndex);
+            dictionary.Add("pointcount", _data.pointCount);
+            dictionary.Add("vertexcount", _data.vertexCount);
+            dictionary.Add("primitivecount", _data.primCount);
             
-            HoudiniGeoFileInfo fileInfo = data.fileInfo.Copy();
+            var fileInfo = _data.fileInfo.Copy();
             fileInfo.date = DateTime.Now;
             
             dictionary.Add("info", fileInfo);
@@ -131,7 +131,7 @@ namespace Houdini.GeoImportExport
                     {
                         "pointref", new Dictionary<string, object>
                         {
-                            {"indices", data.pointRefs}
+                            {"indices", _data.pointRefs}
                         }
                     }
                 });
@@ -140,16 +140,16 @@ namespace Houdini.GeoImportExport
         private static void AddAttributesToDictionary(Dictionary<string, object> dictionary)
         {
             // Add the attributes dictionary itself.
-            Dictionary<string, object> attributesDictionary = new Dictionary<string, object>();
+            var attributesDictionary = new Dictionary<string, object>();
             dictionary.Add("attributes", attributesDictionary);
             
             // Now add an array to that dictionary for every type of attribute owner.
-            foreach (KeyValuePair<string,HoudiniGeoAttributeOwner> kvp in HoudiniGeoFileParser.ATTRIBUTES_TO_PARSE)
+            foreach (var kvp in HoudiniGeoFileParser.attributesToParse)
             {
-                List<object> ownerTypeAttributes = new List<object>(); 
+                var ownerTypeAttributes = new List<object>(); 
                 
                 // Populate the attribute owner's array with all attributes of that owner (vertex/point/primitive/detail).
-                foreach (HoudiniGeoAttribute attribute in data.attributes)
+                foreach (var attribute in _data.attributes)
                 {
                     if (attribute.owner != kvp.Value)
                         continue;
@@ -165,21 +165,21 @@ namespace Houdini.GeoImportExport
 
         private static void AddSingleAttributeToDictionary(List<object> attributes, HoudiniGeoAttribute attribute)
         {
-            string typeString = HoudiniGeoFileParser.AttributeTypeEnumValueToCategoryString(attribute.type);
+            var typeString = HoudiniGeoFileParser.AttributeTypeEnumValueToCategoryString(attribute.type);
 
             // Each attribute has a list with two dictionaries: a header and a body.
-            List<object> attributeDictionaries = new List<object>();
+            var attributeDictionaries = new List<object>();
             attributes.Add(attributeDictionaries);
 
             // Header dictionary.
-            Dictionary<string, object> header = new Dictionary<string, object>()
+            var header = new Dictionary<string, object>()
             {
                 {"scope", "public"}, // TODO: Does this ever vary?
                 {"type", typeString},
                 {"name", attribute.name},
                 {
                     "options", // TODO: What is this for exactly? Looks like it only exists for built-in attributes?
-                    attributeOptionsByName.TryGetValue(attribute.name, out AttributeOptions options)
+                    AttributeOptionsByName.TryGetValue(attribute.name, out var options)
                         ? options
                         : new object()
                 },
@@ -187,8 +187,8 @@ namespace Houdini.GeoImportExport
             attributeDictionaries.Add(header);
 
             // Body dictionary.
-            Dictionary<string, object> body = new Dictionary<string, object>();
-            body.Add("size", attribute.tupleSize); // TODO: Is this a duplicate of values.size down below?
+            var body = new Dictionary<string, object> {{"size", attribute.tupleSize} // TODO: Is this a duplicate of values.size down below?
+            };
             string storageType;
             switch (attribute.type)
             {
@@ -199,7 +199,7 @@ namespace Houdini.GeoImportExport
                     body.Add("storage", storageType);
 
                     // TODO: What are we supposed to fill in for the defaults?
-                    Dictionary<string, object> defaultsDictionary = new Dictionary<string, object>();
+                    var defaultsDictionary = new Dictionary<string, object>();
                     body.Add("defaults", defaultsDictionary);
                     defaultsDictionary.Add("size", 1);
                     defaultsDictionary.Add(
@@ -207,7 +207,7 @@ namespace Houdini.GeoImportExport
                     defaultsDictionary.Add("values", new float[] {0});
 
                     // Actual values
-                    Dictionary<string, object> valuesDictionary = new Dictionary<string, object>();
+                    var valuesDictionary = new Dictionary<string, object>();
                     body.Add("values", valuesDictionary);
                     valuesDictionary.Add(
                         "size", attribute.tupleSize); // TODO: Is this a duplicate of the tuple size above?
@@ -216,7 +216,7 @@ namespace Houdini.GeoImportExport
                     // Tuples.
                     if (attribute.type == HoudiniGeoAttributeType.Float)
                     {
-                        string valuesKey = attribute.tupleSize == 1 ? "arrays" : "tuples";
+                        var valuesKey = attribute.tupleSize == 1 ? "arrays" : "tuples";
                         valuesDictionary.Add(valuesKey, BreakIntoTuples(attribute.floatValues.ToArray(), attribute.tupleSize));
                     }
                     else if (attribute.type == HoudiniGeoAttributeType.Integer)
@@ -232,15 +232,15 @@ namespace Houdini.GeoImportExport
                     body.Add("storage", storageType);
 
                     BreakIntoUniqueStringsAndIndices(
-                        attribute.stringValues.ToArray(), out string[] uniqueStrings, out int[] indices);
+                        attribute.stringValues.ToArray(), out var uniqueStrings, out var indices);
                     body.Add("strings", uniqueStrings);
 
-                    Dictionary<string, object> indicesDictionary = new Dictionary<string, object>();
+                    var indicesDictionary = new Dictionary<string, object>();
                     body.Add("indices", indicesDictionary);
                     indicesDictionary.Add("size", attribute.tupleSize);
                     indicesDictionary.Add("storage", storageType);
 
-                    indicesDictionary.Add("arrays", new int[][] {indices});
+                    indicesDictionary.Add("arrays", new[] {indices});
                     break;
                 case HoudiniGeoAttributeType.Invalid:
                 default:
@@ -253,18 +253,16 @@ namespace Houdini.GeoImportExport
         private static void AddPointGroupsToDictionary(Dictionary<string, object> dictionary)
         {
             // Add the attributes dictionary itself.
-            List<object> pointGroupsList = new List<object>();
+            var pointGroupsList = new List<object>();
             
             // Now for every group add a list with a header and a body dictionary.
-            foreach (PointGroup pointGroup in data.pointGroups)
+            foreach (var pointGroup in _data.PointGroups)
             {
-                List<object> pointGroupDictionaries = new List<object>();
-                Dictionary<string, object> headerDictionary = new Dictionary<string, object>();
-                headerDictionary.Add("name", pointGroup.name);
+                var pointGroupDictionaries = new List<object>();
+                var headerDictionary = new Dictionary<string, object> {{"name", pointGroup.name}};
                 pointGroupDictionaries.Add(headerDictionary);
                 
-                Dictionary<string, object> bodyDictionary = new Dictionary<string, object>();
-                bodyDictionary.Add("selection", GetPointGroupSelectionDictionary(pointGroup));
+                var bodyDictionary = new Dictionary<string, object> {{"selection", GetPointGroupSelectionDictionary(pointGroup)}};
                 pointGroupDictionaries.Add(bodyDictionary);
                 
                 pointGroupsList.Add(pointGroupDictionaries);
@@ -276,15 +274,15 @@ namespace Houdini.GeoImportExport
         private static Dictionary<string, object> GetPointGroupSelectionDictionary(PointGroup pointGroup)
         {
             // Add the attributes dictionary itself.
-            Dictionary<string, object> selectionDictionary = new Dictionary<string, object>();
+            var selectionDictionary = new Dictionary<string, object>();
             
-            Dictionary<string, object> unordered = new Dictionary<string, object>();
+            var unordered = new Dictionary<string, object>();
 
             // If there's fewer than 17 we can store it in a binary array, which is not super efficient but simple.
-            if (data.pointCount < 17)
+            if (_data.pointCount < 17)
             {
-                bool[] binaryValues = new bool[data.pointCount];
-                for (int i = 0; i < data.pointCount; i++)
+                var binaryValues = new bool[_data.pointCount];
+                for (var i = 0; i < _data.pointCount; i++)
                 {
                     binaryValues[i] = pointGroup.ids.Contains(i);
                 }
@@ -294,9 +292,9 @@ namespace Houdini.GeoImportExport
             {
                 // Make a "boolean Run Length Encoded" bit-array. This is a list of how many times a certain boolean
                 // is to be added. Much more efficient this way.
-                List<object> runs = new List<object>();
-                int currentRunLength = 0;
-                bool currentRunValue = pointGroup.ids.Contains(0);
+                var runs = new List<object>();
+                var currentRunLength = 0;
+                var currentRunValue = pointGroup.ids.Contains(0);
 
                 void EndCurrentRun()
                 {
@@ -304,9 +302,9 @@ namespace Houdini.GeoImportExport
                     runs.Add(currentRunValue);
                 }
                 
-                for (int i = 0; i < data.pointCount; i++)
+                for (var i = 0; i < _data.pointCount; i++)
                 {
-                    bool currentValue = pointGroup.ids.Contains(i);
+                    var currentValue = pointGroup.ids.Contains(i);
 
                     // Extend the current run!
                     if (currentValue == currentRunValue)
@@ -314,7 +312,7 @@ namespace Houdini.GeoImportExport
                         currentRunLength++;
                         
                         // Normally we continue the run, unless this is the final entry then we must end it.
-                        if (i < data.pointCount - 1)
+                        if (i < _data.pointCount - 1)
                             continue;
                     }
                     
@@ -338,9 +336,9 @@ namespace Houdini.GeoImportExport
 
         private static void BreakIntoUniqueStringsAndIndices(string[] duplicated, out string[] unique, out int[] indices)
         {
-            List<string> uniqueStrings = new List<string>();
+            var uniqueStrings = new List<string>();
             indices = new int[duplicated.Length];
-            for (int i = 0; i < duplicated.Length; i++)
+            for (var i = 0; i < duplicated.Length; i++)
             {
                 // New string found, add it to the list and set the index to it.
                 if (!uniqueStrings.Contains(duplicated[i]))
@@ -361,7 +359,7 @@ namespace Houdini.GeoImportExport
         /// </summary>
         private static T[][] BreakIntoTuples<T>(T[] sequential, int tupleSize)
         {
-            List<T[]> tuples = new List<T[]>();
+            var tuples = new List<T[]>();
 
             // Need to early out here because the for loop below never completes in this case. 
             if (sequential.Length == 0)
@@ -371,10 +369,10 @@ namespace Houdini.GeoImportExport
             if (tupleSize == 1)
                 tupleSize = sequential.Length;
             
-            for (int i = 0; i <= sequential.Length - tupleSize; i += tupleSize)
+            for (var i = 0; i <= sequential.Length - tupleSize; i += tupleSize)
             {
-                T[] tuple = new T[tupleSize];
-                for (int j = 0; j < tupleSize; j++)
+                var tuple = new T[tupleSize];
+                for (var j = 0; j < tupleSize; j++)
                 {
                     tuple[j] = sequential[i + j];
                 }
@@ -385,24 +383,25 @@ namespace Houdini.GeoImportExport
         
         private static void AddPrimitivesToDictionary(Dictionary<string, object> dictionary)
         {
-            List<object> primitivesList = new List<object>();
+            var primitivesList = new List<object>();
             dictionary.Add("primitives", primitivesList);
             
-            foreach (NURBCurvePrimitive nurbCurvePrimitive in data.nurbCurvePrimitives)
+            foreach (var nurbCurvePrimitive in _data.nurbCurvePrimitives)
             {
                 // Each attribute has a list with two dictionaries: a header and a body.
-                List<object> primitiveDictionaries = new List<object>();
+                var primitiveDictionaries = new List<object>();
                 
                 // First a header that just specifies the type of curve.
-                Dictionary<string, object> headerDictionary = new Dictionary<string, object>();
-                headerDictionary.Add("type", nurbCurvePrimitive.type);
-            
+                var headerDictionary = new Dictionary<string, object> {{"type", nurbCurvePrimitive.type}};
+
                 // Now a body that specifies the properties of the curve.
-                Dictionary<string, object> bodyDictionary = new Dictionary<string, object>();
-                bodyDictionary.Add("vertex", nurbCurvePrimitive.indices);
-                bodyDictionary.Add("closed", false);
-            
-                Dictionary<string, object> basisDictionary = new Dictionary<string, object>();
+                var bodyDictionary = new Dictionary<string, object>
+                {
+                    {"vertex", nurbCurvePrimitive.indices},
+                    {"closed", false}
+                };
+
+                var basisDictionary = new Dictionary<string, object>();
                 bodyDictionary.Add("basis", basisDictionary);
                 basisDictionary.Add("type", "NURBS");
                 basisDictionary.Add("order", nurbCurvePrimitive.order);
@@ -418,16 +417,16 @@ namespace Houdini.GeoImportExport
 
         private static void SaveDataToFile()
         {
-            writer.Flush();
+            _writer.Flush();
 
-            string text = stringWriter.GetStringBuilder().ToString();
-            writer.Close();
+            var text = _stringWriter.GetStringBuilder().ToString();
+            _writer.Close();
 
             // DEBUG: Change the extension to .txt so it doesn't get parsed as a Houdini file yet while working.
             //path = Path.ChangeExtension(path, "txt");
 
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
-            File.WriteAllText(path, text);
+            Directory.CreateDirectory(Path.GetDirectoryName(_path) ?? string.Empty);
+            File.WriteAllText(_path, text);
 
             AssetDatabase.Refresh();
         }

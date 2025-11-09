@@ -16,21 +16,24 @@ MonoBehaviour:
   importSettings:
     reverseWinding: 0
   fileVersion: 13.0.665
+  hasIndex: 0
   pointCount: 2
   vertexCount: 2
   primCount: 2
   fileInfo:
+    timetocook: 0.000016
     software: Houdini 13.0.665
-    hostname: waldos-mbp.home
     artist: waldo
-    timeToCook: 0.000016
+    hostname: waldos-mbp.home
+    time: 0
     bounds:
-      m_Center: {x: -1, y: 3.6, z: -1}
-      m_Extent: {x: 0.5, y: -0.5, z: 0.5}
-    primCountSummary: '          2 Spheres
+      m_Center: {x: 0, y: 1.3, z: 0}
+      m_Extent: {x: 1, y: -2.3, z: 1}
+    primcount_summary: '          2 Spheres
 
 '
-    attributeSummary: "     1 point attributes:\tP\n"
+    attribute_summary: "     1 point attributes:\tP\n"
+    group_summary: 
   pointRefs: 0000000001000000
   attributes:
   - name: P
@@ -51,3 +54,4 @@ MonoBehaviour:
   polyPrimitives: []
   bezierCurvePrimitives: []
   nurbCurvePrimitives: []
+  exportPath: 

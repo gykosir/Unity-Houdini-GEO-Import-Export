@@ -17,12 +17,12 @@ namespace Houdini.GeoImportExport
         public static void AddValueAsTuples(
             this HoudiniGeoAttribute attribute, object value, bool translateCoordinateSystems)
         {
-            string name = attribute.name;
+            var name = attribute.name;
 
             // If specified, automatically translate the position to Houdini's format.
             if (translateCoordinateSystems && name == HoudiniGeoExtensions.PositionAttributeName)
             {
-                Vector3 p = Units.ToHoudiniPosition((Vector3)value);
+                var p = Units.ToHoudiniPosition((Vector3)value);
                 value = p;
             }
 
@@ -30,14 +30,14 @@ namespace Houdini.GeoImportExport
             else if (translateCoordinateSystems && (name == HoudiniGeoExtensions.NormalAttributeName ||
                                                     name == HoudiniGeoExtensions.UpAttributeName))
             {
-                Vector3 n = Units.ToHoudiniDirection((Vector3)value);
+                var n = Units.ToHoudiniDirection((Vector3)value);
                 value = n;
             }
 
             // If specified, automatically translate the rotation to Houdini's format.
             else if (translateCoordinateSystems && name == HoudiniGeoExtensions.RotationAttributeName)
             {
-                Quaternion orient = Units.ToHoudiniRotation((Quaternion)value);
+                var orient = Units.ToHoudiniRotation((Quaternion)value);
                 value = orient;
             }
 

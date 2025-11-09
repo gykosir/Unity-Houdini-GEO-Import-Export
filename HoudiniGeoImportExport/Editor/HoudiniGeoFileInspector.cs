@@ -27,7 +27,7 @@ namespace Houdini.GeoImportExport
             if (!isHoudiniGeoFile && !fileCheckPerformed)
             {
                 string assetPath = AssetDatabase.GetAssetPath(target);
-                isHoudiniGeoFile = assetPath.EndsWith("." + HoudiniGeo.EXTENSION);
+                isHoudiniGeoFile = assetPath.EndsWith("." + HoudiniGeo.Extension);
                 fileCheckPerformed = true;
             }
             else if (!isHoudiniGeoFile)

@@ -24,7 +24,7 @@ namespace Houdini.GeoImportExport
             string path, bool translateCoordinateSystems = true)
             where PointType : PointData
         {
-            HoudiniGeo houdiniGeo = HoudiniGeo.Create();
+            var houdiniGeo = HoudiniGeo.Create();
             ExportToGeoFile(pointCollection, houdiniGeo, path, translateCoordinateSystems);
         }
         

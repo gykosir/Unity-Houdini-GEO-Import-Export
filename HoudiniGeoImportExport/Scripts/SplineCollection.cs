@@ -12,10 +12,10 @@ using System.Collections.Generic;
 
 namespace Houdini.GeoImportExport
 {
-    public partial class SplineCollection<SplineType> : IList<SplineType>
+    public class SplineCollection<SplineType> : IList<SplineType>
         where SplineType : SplineDataBase
     {
-        private List<SplineType> points = new List<SplineType>();
+        private readonly List<SplineType> points = new List<SplineType>();
 
         #region IList Delegation
         public IEnumerator<SplineType> GetEnumerator() => points.GetEnumerator();

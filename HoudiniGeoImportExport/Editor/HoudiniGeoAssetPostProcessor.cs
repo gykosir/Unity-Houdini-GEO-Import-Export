@@ -8,8 +8,6 @@
 
 using UnityEngine;
 using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
@@ -24,18 +22,18 @@ namespace Houdini.GeoImportExport
 
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
-            string[] houdiniGeosImported = importedAssets.Where(p => IsHoudiniGeoFile(p)).ToArray();
+            var houdiniGeosImported = importedAssets.Where(IsHoudiniGeoFile).ToArray();
 
             foreach (var assetPath in houdiniGeosImported)
             {
                 //Debug.Log("Importing: " + assetPath);
 
-                string outDir = Path.GetDirectoryName(assetPath);
-                string assetName = Path.GetFileNameWithoutExtension(assetPath);
+                var outDir = Path.GetDirectoryName(assetPath);
+                var assetName = Path.GetFileNameWithoutExtension(assetPath);
 
                 // Parse geo
-                var geoOutputPath = string.Format("{0}/{1}.asset", outDir, assetName);
-                var houdiniGeo = AssetDatabase.LoadAllAssetsAtPath(geoOutputPath).Where(a => a is HoudiniGeo).FirstOrDefault() as HoudiniGeo;
+                var geoOutputPath = $"{outDir}/{assetName}.asset";
+                var houdiniGeo = AssetDatabase.LoadAllAssetsAtPath(geoOutputPath).FirstOrDefault(a => a is HoudiniGeo) as HoudiniGeo;
                 if (houdiniGeo == null)
                 {
                     houdiniGeo = ScriptableObject.CreateInstance<HoudiniGeo>();

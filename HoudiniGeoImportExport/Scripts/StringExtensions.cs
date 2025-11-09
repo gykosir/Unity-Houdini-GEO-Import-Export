@@ -10,13 +10,10 @@ namespace Houdini.GeoImportExport
     {
         public static string RemoveSuffix(this string name, string suffix)
         {
-            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(suffix))
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(suffix) || !name.EndsWith(suffix))
                 return name;
 
-            if (!name.EndsWith(suffix))
-                return name;
-
-            return name.Substring(0, name.Length - suffix.Length);
+            return name[..^suffix.Length];
         }
     
         public static string RemoveSuffix(this string name, char suffix)

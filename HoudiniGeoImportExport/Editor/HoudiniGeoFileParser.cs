@@ -9,17 +9,14 @@
 using System;
 using UnityEngine;
 using UnityEditor;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Houdini.GeoImportExport
 {
-    public class HoudiniGeoParseException : System.Exception
+    public class HoudiniGeoParseException : Exception
     {
         public HoudiniGeoParseException(string message) : base(message)
         {
@@ -47,15 +44,15 @@ namespace Houdini.GeoImportExport
             }
 
             // Parse the json
-            JToken mainToken = null;
+            JToken mainToken;
             try
             {
                 mainToken = JToken.Parse(File.ReadAllText(assetPath));
             }
-            catch (System.Exception e)
+            catch (Exception)
             {
-                Debug.LogError(string.Format("HoudiniGeoParseError: JSON in file '{0}' could not be parsed", assetPath));
-                throw e;
+                Debug.LogError($"HoudiniGeoParseError: JSON in file '{assetPath}' could not be parsed");
+                throw;
             }
 
             // The houdini geo format expects the main element to be an array
@@ -65,9 +62,9 @@ namespace Houdini.GeoImportExport
             }
 
             // The main element is an array that actually functions as a dictionary!
-            Dictionary<string, JToken> geoDataDict = ArrayKeyValueToDictionary(mainToken.Children().ToArray());
+            var geoDataDict = ArrayKeyValueToDictionary(mainToken.Children().ToArray());
 
-            HoudiniGeo houdiniGeo = existingGeo;
+            var houdiniGeo = existingGeo;
             if (houdiniGeo == null)
             {
                 houdiniGeo = ScriptableObject.CreateInstance<HoudiniGeo>();
@@ -76,8 +73,7 @@ namespace Houdini.GeoImportExport
 
             houdiniGeo.fileVersion = geoDataDict["fileversion"].ValueSafe<string>();
 
-            houdiniGeo.hasIndex = geoDataDict.TryGetValue("hasIndex", out JToken hasIndexToken) 
-                ? hasIndexToken.ValueSafe<bool>() : false;
+            houdiniGeo.hasIndex = geoDataDict.TryGetValue("hasIndex", out var hasIndexToken) && hasIndexToken.ValueSafe<bool>();
 
             houdiniGeo.pointCount = geoDataDict["pointcount"].ValueSafe<int>();
             houdiniGeo.vertexCount = geoDataDict["vertexcount"].ValueSafe<int>();
@@ -96,11 +92,9 @@ namespace Houdini.GeoImportExport
         {
             var fileInfo = new HoudiniGeoFileInfo();
 
-            // Null check hozzáadása
             if (infoValueToken == null)
                 throw new HoudiniGeoParseException("Missing 'info' section in geo file");
 
-            // Biztonságos kulcs lekérés
             fileInfo.software = infoValueToken.TryGetValue("software", out var softwareToken)
                 ? softwareToken.Value<string>()
                 : "Unknown";
@@ -114,22 +108,22 @@ namespace Houdini.GeoImportExport
                 ? timeToken.Value<float>()
                 : 0f;
             fileInfo.date = infoValueToken.TryGetValue("date", out var dateToken)
-                ? dateToken.Value<System.DateTime>()
-                : System.DateTime.MinValue;
+                ? dateToken.Value<DateTime>()
+                : DateTime.MinValue;
 
             if (infoValueToken.TryGetValue("bounds", out var boundsToken))
             {
-                float[] bv = boundsToken.Values<float>().ToArray();
+                var bv = boundsToken.Values<float>().ToArray();
                 if (bv.Length == 6)
                 {
-                    Vector3 boundsMin = new Vector3(bv[0], bv[1], bv[2]);
-                    Vector3 boundsMax = new Vector3(bv[3], bv[4], bv[5]);
+                    var boundsMin = new Vector3(bv[0], bv[1], bv[2]);
+                    var boundsMax = new Vector3(bv[3], bv[4], bv[5]);
                     fileInfo.bounds = new Bounds();
                     fileInfo.bounds.SetMinMax(boundsMin, boundsMax);
                 }
             }
 
-            bool hadPrimCountSummary = infoValueToken.TryGetValue("primcount_summary", out JToken primcountSummary);
+            var hadPrimCountSummary = infoValueToken.TryGetValue("primcount_summary", out var primcountSummary);
             if (hadPrimCountSummary)
                 fileInfo.primcount_summary = primcountSummary.Value<string>();
 
@@ -145,12 +139,12 @@ namespace Houdini.GeoImportExport
             if (topologyValueToken == null)
                 throw new HoudiniGeoParseException("Missing 'topology' section in geo file");
 
-            Dictionary<string, JToken> topologyDict = ArrayKeyValueToDictionary(topologyValueToken.Children().ToArray());
+            var topologyDict = ArrayKeyValueToDictionary(topologyValueToken.Children().ToArray());
 
             if (!topologyDict.TryGetValue("pointref", out var pointRefToken))
                 throw new HoudiniGeoParseException("Missing 'pointref' in topology");
 
-            Dictionary<string, JToken> pointRefDict = ArrayKeyValueToDictionary(pointRefToken.Children().ToArray());
+            var pointRefDict = ArrayKeyValueToDictionary(pointRefToken.Children().ToArray());
 
             if (!pointRefDict.TryGetValue("indices", out var indicesToken))
                 throw new HoudiniGeoParseException("Missing 'indices' in pointref");
@@ -158,20 +152,19 @@ namespace Houdini.GeoImportExport
             geo.pointRefs = indicesToken.Values<int>().ToList();
         }
 
-        private static Dictionary<string, HoudiniGeoAttributeOwner> CACHED_ATTRIBUTES_TO_PARSE;
-        public static Dictionary<string, HoudiniGeoAttributeOwner> ATTRIBUTES_TO_PARSE
+        private static Dictionary<string, HoudiniGeoAttributeOwner> _cachedAttributesToParse;
+        public static Dictionary<string, HoudiniGeoAttributeOwner> attributesToParse
         {
             get
             {
-                if (CACHED_ATTRIBUTES_TO_PARSE == null)
+                _cachedAttributesToParse ??= new Dictionary<string, HoudiniGeoAttributeOwner>
                 {
-                    CACHED_ATTRIBUTES_TO_PARSE = new Dictionary<string, HoudiniGeoAttributeOwner>();
-                    CACHED_ATTRIBUTES_TO_PARSE.Add("vertexattributes", HoudiniGeoAttributeOwner.Vertex);
-                    CACHED_ATTRIBUTES_TO_PARSE.Add("pointattributes", HoudiniGeoAttributeOwner.Point);
-                    CACHED_ATTRIBUTES_TO_PARSE.Add("primitiveattributes", HoudiniGeoAttributeOwner.Primitive);
-                    CACHED_ATTRIBUTES_TO_PARSE.Add("globalattributes", HoudiniGeoAttributeOwner.Detail);
-                }
-                return CACHED_ATTRIBUTES_TO_PARSE;
+                    {"vertexattributes", HoudiniGeoAttributeOwner.Vertex},
+                    {"pointattributes", HoudiniGeoAttributeOwner.Point},
+                    {"primitiveattributes", HoudiniGeoAttributeOwner.Primitive},
+                    {"globalattributes", HoudiniGeoAttributeOwner.Detail}
+                };
+                return _cachedAttributesToParse;
             }
         }
 
@@ -192,27 +185,18 @@ namespace Houdini.GeoImportExport
             //		...
             // ],
 
-            Dictionary<string, JToken> attributeTokensDict = ArrayKeyValueToDictionary(attributesValueToken.Children().ToArray());
+            var attributeTokensDict = ArrayKeyValueToDictionary(attributesValueToken.Children().ToArray());
 
             // Parse each attribute group
             var geoAttributes = new List<HoudiniGeoAttribute>();
-            foreach (var attrKeyVal in ATTRIBUTES_TO_PARSE)
+            foreach (var (attrGroupKey, attrOwner) in attributesToParse)
             {
-                string attrGroupKey = attrKeyVal.Key;
-                HoudiniGeoAttributeOwner attrOwner = attrKeyVal.Value;
-
-                JToken groupValueToken;
-                if (attributeTokensDict.TryGetValue(attrGroupKey, out groupValueToken))
+                if (!attributeTokensDict.TryGetValue(attrGroupKey, out var groupValueToken)) continue;
+                // Parse each attribute in group
+                foreach (var attributeToken in groupValueToken.Children())
                 {
-                    // Parse each attribute in group
-                    foreach (var attributeToken in groupValueToken.Children())
-                    {
-                        var attribute = ParseSingleAttribute(attributeToken, attrOwner);
-                        if (attribute != null)
-                        {
-                            geoAttributes.Add(attribute);
-                        }
-                    }
+                    var attribute = ParseSingleAttribute(attributeToken, attrOwner);
+                    if (attribute != null) geoAttributes.Add(attribute);
                 }
             }
 
@@ -221,7 +205,7 @@ namespace Houdini.GeoImportExport
 
         private static HoudiniGeoAttribute ParseSingleAttribute(JToken attrToken, HoudiniGeoAttributeOwner owner)
         {
-            JToken[] childBlockTokens = attrToken.Children().ToArray();
+            var childBlockTokens = attrToken.Children().ToArray();
 
             if (childBlockTokens.Length < 2)
             {
@@ -229,26 +213,28 @@ namespace Houdini.GeoImportExport
                 return null;
             }
 
-            JToken headerToken = childBlockTokens[0];
-            JToken bodyToken = childBlockTokens[1];
+            var headerToken = childBlockTokens[0];
+            var bodyToken = childBlockTokens[1];
 
-            var geoAttribute = new HoudiniGeoAttribute();
-            geoAttribute.owner = owner;
+            var geoAttribute = new HoudiniGeoAttribute
+            {
+                owner = owner
+            };
 
             // Parse header block
-            Dictionary<string, JToken> headerBlockDict = ArrayKeyValueToDictionary(headerToken.Children().ToArray());
+            var headerBlockDict = ArrayKeyValueToDictionary(headerToken.Children().ToArray());
             geoAttribute.name = headerBlockDict["name"].Value<string>();
-            string valueType = headerBlockDict["type"].Value<string>();
+            var valueType = headerBlockDict["type"].Value<string>();
 
             // Parse body block
-            Dictionary<string, JToken> valuesBlockDict = ArrayKeyValueToDictionary(bodyToken.Children().ToArray());
+            var valuesBlockDict = ArrayKeyValueToDictionary(bodyToken.Children().ToArray());
             geoAttribute.tupleSize = valuesBlockDict["size"].Value<int>();
 
             // Parse Numeric types
             if (valueType == "numeric")
             {
                 // Get storage type (float, int)
-                string storageType = valuesBlockDict["storage"].Value<string>();
+                var storageType = valuesBlockDict["storage"].Value<string>();
                 geoAttribute.type = AttributeTypeStrToEnumValue(storageType);
                 if (geoAttribute.type == HoudiniGeoAttributeType.Invalid)
                 {
@@ -257,11 +243,11 @@ namespace Houdini.GeoImportExport
                 }
 
                 // Get all values
-                Dictionary<string, JToken> valuesDict = ArrayKeyValueToDictionary(valuesBlockDict["values"].Children().ToArray());
+                var valuesDict = ArrayKeyValueToDictionary(valuesBlockDict["values"].Children().ToArray());
                 if (geoAttribute.type == HoudiniGeoAttributeType.Float)
                 {
-                    int tupleSize = valuesDict["size"].Value<int>();
-                    string valuesKey = (tupleSize == 1) ? "arrays" : "tuples";
+                    var tupleSize = valuesDict["size"].Value<int>();
+                    var valuesKey = (tupleSize == 1) ? "arrays" : "tuples";
                     geoAttribute.floatValues = valuesDict[valuesKey].Children().SelectMany(t => t.Values<float>()).ToList();
                 }
                 else if (geoAttribute.type == HoudiniGeoAttributeType.Integer)
@@ -274,9 +260,9 @@ namespace Houdini.GeoImportExport
             {
                 geoAttribute.type = HoudiniGeoAttributeType.String;
 
-                Dictionary<string, JToken> indicesDict = ArrayKeyValueToDictionary(valuesBlockDict["indices"].Children().ToArray());
-                string[] stringValues = valuesBlockDict["strings"].Values<string>().ToArray();
-                int[] indices = indicesDict["arrays"].Children().SelectMany(t => t.Values<int>()).ToArray();
+                var indicesDict = ArrayKeyValueToDictionary(valuesBlockDict["indices"].Children().ToArray());
+                var stringValues = valuesBlockDict["strings"].Values<string>().ToArray();
+                var indices = indicesDict["arrays"].Children().SelectMany(t => t.Values<int>()).ToArray();
 
                 geoAttribute.stringValues = indices.Select(i => (i >= 0 && i < stringValues.Length) ? stringValues[i] : "").ToList();
             }
@@ -300,11 +286,11 @@ namespace Houdini.GeoImportExport
                 return;
             }
 
-            int primIdCounter = 0;
+            const int primIdCounter = 0;
 
             foreach (var primitiveToken in primitivesValueToken.Children())
             {
-                JToken[] childBlockTokens = primitiveToken.Children().ToArray();
+                var childBlockTokens = primitiveToken.Children().ToArray();
 
                 if (childBlockTokens.Length < 2)
                 {
@@ -312,11 +298,11 @@ namespace Houdini.GeoImportExport
                     continue;
                 }
 
-                JToken headerToken = childBlockTokens[0];
-                JToken bodyToken = childBlockTokens[1];
+                var headerToken = childBlockTokens[0];
+                var bodyToken = childBlockTokens[1];
 
                 // Parse header
-                Dictionary<string, JToken> headerDict = ArrayKeyValueToDictionary(headerToken.Children().ToArray());
+                var headerDict = ArrayKeyValueToDictionary(headerToken.Children().ToArray());
 
                 if (!headerDict.TryGetValue("type", out var typeToken))
                 {
@@ -324,7 +310,7 @@ namespace Houdini.GeoImportExport
                     continue;
                 }
 
-                string type = typeToken.Value<string>();
+                var type = typeToken.Value<string>();
 
                 // Parse RunType primitives
                 if (type == "run")
@@ -335,7 +321,7 @@ namespace Houdini.GeoImportExport
                         continue;
                     }
 
-                    string runType = runTypeToken.Value<string>();
+                    var runType = runTypeToken.Value<string>();
                     switch (runType)
                     {
                         case "Poly":
@@ -355,7 +341,7 @@ namespace Houdini.GeoImportExport
         private static PolyPrimitive[] ParsePolyPrimitiveGroup(Dictionary<string, JToken> headerDict, JToken bodyToken, int primIdCounter)
         {
             if (bodyToken == null)
-                return new PolyPrimitive[0];
+                return Array.Empty<PolyPrimitive>();
 
             return bodyToken.Children().Select(primToken =>
             {
@@ -364,10 +350,13 @@ namespace Houdini.GeoImportExport
                 if (primChildTokens.Length == 0)
                     return null;
 
-                var prim = new PolyPrimitive();
-                prim.id = primIdCounter++;
-                prim.indices = primChildTokens[0].Values<int>().ToArray();
-                prim.triangles = TriangulateNGon(prim.indices);
+                var indices = primChildTokens[0].Values<int>().ToArray();
+                var prim = new PolyPrimitive
+                {
+                    id = primIdCounter++,
+                    indices = indices,
+                    triangles = TriangulateNGon(indices)
+                };
                 return prim;
             }).Where(p => p != null).ToArray();
         }
@@ -380,8 +369,8 @@ namespace Houdini.GeoImportExport
             }
 
             // Naive triangulation! Does not work for convex ngons
-            List<int> triangles = new List<int>();
-            for (int offset = 1; offset < indices.Length - 1; offset++)
+            var triangles = new List<int>();
+            for (var offset = 1; offset < indices.Length - 1; offset++)
             {
                 triangles.Add(indices[0]);
                 triangles.Add(indices[offset]);
@@ -390,23 +379,17 @@ namespace Houdini.GeoImportExport
             return triangles.ToArray();
         }
 
-
-
-
-
-
-
         private static T ValueSafe<T>(this JToken jToken)
         {
             try
             {
                 return jToken.Value<T>();
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogException(e);
-                throw new HoudiniGeoParseException(string.Format("Expecting property value of type '{0}' but found '{1}' instead",
-                                                                 typeof(T).Name, jToken.Type));
+                throw new HoudiniGeoParseException(
+                    $"Expecting property value of type '{typeof(T).Name}' but found '{jToken.Type}' instead");
             }
         }
 
@@ -414,7 +397,7 @@ namespace Houdini.GeoImportExport
         {
             var tokenDictionary = new Dictionary<string, JToken>();
 
-            for (int i = 0; i < tokens.Length; i += 2)
+            for (var i = 0; i < tokens.Length; i += 2)
             {
                 var keyToken = tokens[i];
                 var valueToken = tokens[i + 1];
@@ -457,7 +440,7 @@ namespace Houdini.GeoImportExport
 
         public static string AttributeTypeEnumValueToCategoryString(HoudiniGeoAttributeType enumValue)
         {
-            string typeString = null;
+            string typeString;
             switch (enumValue)
             {
                 case HoudiniGeoAttributeType.Float:

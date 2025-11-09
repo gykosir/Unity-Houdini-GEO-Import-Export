@@ -7,7 +7,7 @@ Mesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: multiple_poly_boxes
-  serializedVersion: 10
+  serializedVersion: 12
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
@@ -154,15 +154,30 @@ Mesh:
     m_Center: {x: 1, y: 0, z: 0}
     m_Extent: {x: 1.54, y: 0.54, z: 0.54}
   m_MeshUsageFlags: 0
+  m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 1
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
   m_MeshOptimizationFlags: -1
   m_StreamData:
+    serializedVersion: 2
     offset: 0
     size: 0
     path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -179,22 +194,25 @@ MonoBehaviour:
   importSettings:
     reverseWinding: 1
   fileVersion: 13.0.665
+  hasIndex: 0
   pointCount: 48
   vertexCount: 48
   primCount: 12
   fileInfo:
+    timetocook: 0.001572
     software: Houdini 13.0.665
-    hostname: waldos-mbp.home
     artist: waldo
-    timeToCook: 0.001572
+    hostname: waldos-mbp.home
+    time: 0
     bounds:
-      m_Center: {x: -0.54, y: 2.54, z: -0.54}
-      m_Extent: {x: 0.27, y: -0.27, z: 0.27}
-    primCountSummary: '         12 Polygons
+      m_Center: {x: 0, y: 1, z: 0}
+      m_Extent: {x: 0.54, y: -1.54, z: 0.54}
+    primcount_summary: '         12 Polygons
 
 '
-    attributeSummary: "     1 vertex attributes:\tuv\n     2 point attributes:\tN,
+    attribute_summary: "     1 vertex attributes:\tuv\n     2 point attributes:\tN,
       P\n     1 primitive attributes:\tCd\n"
+    group_summary: 
   pointRefs: 0100000005000000040000000000000002000000060000000c0000001400000003000000070000000a00000012000000160000000e0000000800000010000000130000001500000017000000110000000d0000000b000000090000000f000000190000001d0000001c000000180000001a0000001e000000240000002c0000001b0000001f000000220000002a0000002e0000002600000020000000280000002b0000002d0000002f0000002900000025000000230000002100000027000000
   attributes:
   - name: uv
@@ -792,3 +810,4 @@ MonoBehaviour:
     triangles: 2c0000002d0000002e0000002c0000002e0000002f000000
   bezierCurvePrimitives: []
   nurbCurvePrimitives: []
+  exportPath: 

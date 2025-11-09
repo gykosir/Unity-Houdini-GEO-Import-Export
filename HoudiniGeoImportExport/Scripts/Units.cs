@@ -13,26 +13,26 @@ namespace Houdini.GeoImportExport
 {
     public static class Units
     {
-        private const float UNITY_TO_HOUDINI_SCALE = 100;
+        private const float UnityToHoudiniScale = 100;
         
         public static Vector3 ToUnityPosition(Vector3 houdiniPosition)
         {
-            return new Vector3(-houdiniPosition.x, houdiniPosition.y, houdiniPosition.z) / UNITY_TO_HOUDINI_SCALE;
+            return new Vector3(-houdiniPosition.x, houdiniPosition.y, houdiniPosition.z) / UnityToHoudiniScale;
         }
         
         public static Vector3 ToHoudiniPosition(Vector3 unityPosition)
         {
-            return new Vector3(-unityPosition.x, unityPosition.y, unityPosition.z) * UNITY_TO_HOUDINI_SCALE;
+            return new Vector3(-unityPosition.x, unityPosition.y, unityPosition.z) * UnityToHoudiniScale;
         }
         
         public static float ToUnityDistance(float houdiniDistance)
         {
-            return houdiniDistance / UNITY_TO_HOUDINI_SCALE;
+            return houdiniDistance / UnityToHoudiniScale;
         }
         
         public static float ToHoudiniDistance(float unityDistance)
         {
-            return unityDistance * UNITY_TO_HOUDINI_SCALE;
+            return unityDistance * UnityToHoudiniScale;
         }
 
         public static Vector3 ToUnityDirection(Vector3 houdiniDirection)

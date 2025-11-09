@@ -55,7 +55,7 @@ namespace Houdini.GeoImportExport
             // Nicely format the export related field and buttons.
             EditorGUILayout.BeginHorizontal();
             GUI.enabled = !string.IsNullOrEmpty(exportPathProperty.stringValue) &&
-                          exportPathProperty.stringValue.EndsWith("." + HoudiniGeo.EXTENSION);
+                          exportPathProperty.stringValue.EndsWith("." + HoudiniGeo.Extension);
             bool pressedExport = GUILayout.Button("Export", GUILayout.Width(75));
             GUI.enabled = true;
                 
@@ -83,7 +83,7 @@ namespace Houdini.GeoImportExport
                 }
 
                 exportPathProperty.stringValue = EditorUtility.SaveFilePanel(
-                    "GEO File to Export", directory, fileName, HoudiniGeo.EXTENSION);
+                    "GEO File to Export", directory, fileName, HoudiniGeo.Extension);
             }
 
             serializedObject.ApplyModifiedProperties();

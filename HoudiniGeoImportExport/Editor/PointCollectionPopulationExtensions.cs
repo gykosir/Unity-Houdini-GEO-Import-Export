@@ -55,21 +55,21 @@ namespace Houdini.GeoImportExport
         private static void PlacePrefab<PointType>(PointType point, Transform container)
             where PointType : PointData, IPointDataPopulatable
         {
-            GameObject prefab = GetPrefabFromName(point.name);
+            var prefab = GetPrefabFromName(point.name);
             if (prefab == null)
                 return;
 
-            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, container);
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, container);
             instance.transform.localPosition = point.P;
             instance.transform.localRotation = point.orient;
             instance.transform.localScale = point.scale * point.pscale;
 
             // If there are any components that would like to receive a callback when they are populated by metadata,
             // find those components and give them the callback now.
-            IOnPopulatedByMetaData[] callbacks = instance.GetComponentsInChildren<IOnPopulatedByMetaData>();
-            for (int i = 0; i < callbacks.Length; i++)
+            var callbacks = instance.GetComponentsInChildren<IOnPopulatedByMetaData>();
+            foreach (var t in callbacks)
             {
-                callbacks[i].OnPopulatedByMetaData(point);
+                t.OnPopulatedByMetaData(point);
             }
         }
 
@@ -81,16 +81,16 @@ namespace Houdini.GeoImportExport
             if (string.IsNullOrEmpty(name))
                 return null;
 
-            string originalName = name;
+            var originalName = name;
 
             // First check if we found that prefab already.
-            bool foundAlready = prefabsByName.TryGetValue(originalName, out GameObject prefab);
+            var foundAlready = prefabsByName.TryGetValue(originalName, out var prefab);
             if (foundAlready)
                 return prefab;
 
             // Figure out if a directory is specified.
-            string nameDirectory = Path.GetDirectoryName(name);
-            bool nameIncludesDirectories = !string.IsNullOrEmpty(nameDirectory);
+            var nameDirectory = Path.GetDirectoryName(name);
+            var nameIncludesDirectories = !string.IsNullOrEmpty(nameDirectory);
             if (nameIncludesDirectories)
             {
                 name = Path.GetFileName(name);
@@ -104,12 +104,12 @@ namespace Houdini.GeoImportExport
             }
 
             // It's not known to us. Go find it.
-            string[] guids = AssetDatabase.FindAssets("t:gameObject " + name);
-            List<GameObject> candidates = new List<GameObject>();
-            foreach (string guid in guids)
+            var guids = AssetDatabase.FindAssets("t:gameObject " + name);
+            var candidates = new List<GameObject>();
+            foreach (var guid in guids)
             {
-                string path = AssetDatabase.GUIDToAssetPath(guid).ToUnityPath();
-                string fileName = Path.GetFileNameWithoutExtension(path);
+                var path = AssetDatabase.GUIDToAssetPath(guid).ToUnityPath();
+                var fileName = Path.GetFileNameWithoutExtension(path);
 
                 // The file can't just contain the name on the point, it needs to match it exactly.
                 if (fileName != name)
@@ -118,14 +118,14 @@ namespace Houdini.GeoImportExport
                 // If the name includes directories, filter out any prefabs whose directory doesn't match.
                 if (nameIncludesDirectories)
                 {
-                    string directory = Path.GetDirectoryName(path).ToUnityPath();
+                    var directory = Path.GetDirectoryName(path).ToUnityPath();
 
                     // Make sure that the path of this candidate ends with the specified directories.
                     if (!directory.EndsWith(nameDirectory))
                         continue;
                 }
 
-                GameObject candidatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                var candidatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 candidates.Add(candidatePrefab);
             }
 
