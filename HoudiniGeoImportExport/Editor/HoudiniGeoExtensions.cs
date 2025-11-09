@@ -960,23 +960,20 @@ namespace Houdini.GeoImportExport
                         // If specified, automatically translate the position to Unity's format.
                         if (translateCoordinateSystems && attribute.name == PositionAttributeName)
                         {
-                            var p = Units.ToUnityPosition((Vector3)value);
-                            value = p;
+                            value = Units.ToUnityPosition((Vector3)value);
                         }
                         
                         // If specified, automatically translate the direction to Unity's format.
                         else if (translateCoordinateSystems &&
-                                 (attribute.name == NormalAttributeName || attribute.name == UpAttributeName))
+                                 attribute.name is NormalAttributeName or UpAttributeName)
                         {
-                            var n = Units.ToUnityDirection((Vector3)value);
-                            value = n;
+                            value = Units.ToUnityDirection((Vector3)value);
                         }
 
                         // If specified, automatically translate the rotation to Unity's format.
                         else if (translateCoordinateSystems && attribute.name == RotationAttributeName)
                         {
-                            var orient = Units.ToUnityRotation((Quaternion)value);
-                            value = orient;
+                            value = Units.ToUnityRotation((Quaternion)value);
                         }
                         
                         field.SetValue(point, value);
