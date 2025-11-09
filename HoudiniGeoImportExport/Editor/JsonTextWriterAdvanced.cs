@@ -22,7 +22,7 @@ namespace Newtonsoft.Json
             DictionaryValue,
         }
 
-        private static readonly List<string> ARRAYS_THAT_GET_LINEBREAKS = new List<string>
+        private static readonly List<string> ArraysThatGetLinebreaks = new List<string>
         {
             "vertexattributes",
             "pointattributes",
@@ -30,32 +30,32 @@ namespace Newtonsoft.Json
             "globalattributes",
         };
         
-        private static JsonSerializer cachedJsonSerializer;
+        private static JsonSerializer _cachedJsonSerializer;
         private static JsonSerializer JsonSerializer
         {
             get
             {
-                if (cachedJsonSerializer == null)
-                {
-                    cachedJsonSerializer = JsonSerializer.Create();
-                    cachedJsonSerializer.Converters.Add(new JsonConverterBounds());
-                    cachedJsonSerializer.Converters.Add(new JsonConverterDictionary());
-                }
-                return cachedJsonSerializer;
+                if (_cachedJsonSerializer != null) 
+                    return _cachedJsonSerializer;
+                
+                _cachedJsonSerializer = JsonSerializer.Create();
+                _cachedJsonSerializer.Converters.Add(new JsonConverterBounds());
+                _cachedJsonSerializer.Converters.Add(new JsonConverterDictionary());
+                return _cachedJsonSerializer;
             }
         }
 
-        private bool isArrayDictionary;
-        private ValueTypes valueType;
+        private bool _isArrayDictionary;
+        private ValueTypes _valueType;
         
-        private Stack<object> dictionaryKeyHierarchy = new Stack<object>();
+        private readonly Stack<object> _dictionaryKeyHierarchy = new Stack<object>();
 
-        private object CurrentDictionaryKey => dictionaryKeyHierarchy.Count == 0 ? null : dictionaryKeyHierarchy.Peek();
+        private object CurrentDictionaryKey => _dictionaryKeyHierarchy.Count == 0 ? null : _dictionaryKeyHierarchy.Peek();
 
-        private bool currentArrayWantsLinebreaks;
+        private bool _currentArrayWantsLinebreaks;
 
-        private Stack<Hierarchies> hierarchyStack = new Stack<Hierarchies>();
-        private Hierarchies CurrentHierarchy => hierarchyStack.Peek();
+        private readonly Stack<Hierarchies> _hierarchyStack = new();
+        private Hierarchies CurrentHierarchy => _hierarchyStack.Peek();
 
         public JsonTextWriterAdvanced(TextWriter textWriter) : base(textWriter)
         {
@@ -80,11 +80,11 @@ namespace Newtonsoft.Json
         protected override void WriteIndent()
         {
             // The value of a dictionary's key/value pair does not get indentation...
-            if (CurrentHierarchy == Hierarchies.Dictionary && valueType == ValueTypes.DictionaryValue)
+            if (CurrentHierarchy == Hierarchies.Dictionary && _valueType == ValueTypes.DictionaryValue)
                 return;
             
             // Arrays normally don't get linebreaks, but for specific long arrays like attributes we do want that.
-            if (CurrentHierarchy == Hierarchies.Array && !currentArrayWantsLinebreaks)
+            if (CurrentHierarchy == Hierarchies.Array && !_currentArrayWantsLinebreaks)
                 return;
 
             WriteIndent(true);
@@ -92,40 +92,40 @@ namespace Newtonsoft.Json
 
         public void WriteStartDictionary()
         {
-            isArrayDictionary = true;
+            _isArrayDictionary = true;
             WriteStartArray();
-            isArrayDictionary = false;
+            _isArrayDictionary = false;
         }
 
         private void UpdateArrayWantsLineBreaksState()
         {
-            currentArrayWantsLinebreaks =
-                CurrentDictionaryKey is string key && ARRAYS_THAT_GET_LINEBREAKS.Contains(key);
+            _currentArrayWantsLinebreaks =
+                CurrentDictionaryKey is string key && ArraysThatGetLinebreaks.Contains(key);
         }
         
         public void WriteDictionaryKeyValuePair(object key, object value)
         {
-            valueType = ValueTypes.DictionaryKey;
+            _valueType = ValueTypes.DictionaryKey;
             
-            dictionaryKeyHierarchy.Push(key);
+            _dictionaryKeyHierarchy.Push(key);
             UpdateArrayWantsLineBreaksState();
             
             WriteValue(key);
 
-            valueType = ValueTypes.DictionaryValue;
+            _valueType = ValueTypes.DictionaryValue;
             JsonSerializer.Serialize(this, value);
             
-            valueType = ValueTypes.Value;
+            _valueType = ValueTypes.Value;
             
-            dictionaryKeyHierarchy.Pop();
+            _dictionaryKeyHierarchy.Pop();
             UpdateArrayWantsLineBreaksState();
         }
 
         public void WriteEndDictionary()
         {
-            isArrayDictionary = true;
+            _isArrayDictionary = true;
             WriteEndArray();
-            isArrayDictionary = false;
+            _isArrayDictionary = false;
         }
 
         public override void WriteValue(object value)
@@ -143,28 +143,28 @@ namespace Newtonsoft.Json
         {
             base.WriteStartArray();
             
-            hierarchyStack.Push(isArrayDictionary ? Hierarchies.Dictionary : Hierarchies.Array);
+            _hierarchyStack.Push(_isArrayDictionary ? Hierarchies.Dictionary : Hierarchies.Array);
         }
 
         public override void WriteEndArray()
         {
             base.WriteEndArray();
             
-            hierarchyStack.Pop();
+            _hierarchyStack.Pop();
         }
 
         public override void WriteStartObject()
         {
             base.WriteStartObject();
             
-            hierarchyStack.Push(Hierarchies.Object);
+            _hierarchyStack.Push(Hierarchies.Object);
         }
 
         public override void WriteEndObject()
         {
             base.WriteEndObject();
 
-            hierarchyStack.Pop();
+            _hierarchyStack.Pop();
         }
     }
 }

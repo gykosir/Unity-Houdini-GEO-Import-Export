@@ -16,18 +16,18 @@ namespace Houdini.GeoImportExport
     [CustomEditor(typeof(HoudiniGeo))]
     public class HoudiniGeoInspector : Editor
     {
-        private SerializedProperty exportPathProperty;
+        private SerializedProperty _exportPathProperty;
 
         private void OnEnable()
         {
-            exportPathProperty = serializedObject.FindProperty("exportPath");
+            _exportPathProperty = serializedObject.FindProperty("exportPath");
         }
         
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
 
-            HoudiniGeo houdiniGeo = target as HoudiniGeo;
+            var houdiniGeo = target as HoudiniGeo;
 
             GUILayout.Space(20);
             GUILayout.BeginHorizontal();
@@ -48,20 +48,20 @@ namespace Houdini.GeoImportExport
 
         private void DrawExportSection()
         {
-            HoudiniGeo houdiniGeo = target as HoudiniGeo;
+            var houdiniGeo = target as HoudiniGeo;
             
             serializedObject.Update();
 
             // Nicely format the export related field and buttons.
             EditorGUILayout.BeginHorizontal();
-            GUI.enabled = !string.IsNullOrEmpty(exportPathProperty.stringValue) &&
-                          exportPathProperty.stringValue.EndsWith("." + HoudiniGeo.Extension);
-            bool pressedExport = GUILayout.Button("Export", GUILayout.Width(75));
+            GUI.enabled = !string.IsNullOrEmpty(_exportPathProperty.stringValue) &&
+                          _exportPathProperty.stringValue.EndsWith("." + HoudiniGeo.Extension);
+            var pressedExport = GUILayout.Button("Export", GUILayout.Width(75));
             GUI.enabled = true;
                 
-            EditorGUILayout.PropertyField(exportPathProperty, GUIContent.none);
+            EditorGUILayout.PropertyField(_exportPathProperty, GUIContent.none);
                 
-            bool pressedPick = GUILayout.Button("...", GUILayout.Width(25));
+            var pressedPick = GUILayout.Button("...", GUILayout.Width(25));
             EditorGUILayout.EndHorizontal();
             
             if (pressedExport)
@@ -71,18 +71,18 @@ namespace Houdini.GeoImportExport
             if (pressedPick)
             {
                 string directory, fileName;
-                if (string.IsNullOrEmpty(exportPathProperty.stringValue))
+                if (string.IsNullOrEmpty(_exportPathProperty.stringValue))
                 {
                     directory = Application.dataPath;
                     fileName = "Geometry";
                 }
                 else
                 {
-                    directory = Path.GetDirectoryName(exportPathProperty.stringValue);
-                    fileName = Path.GetFileName(exportPathProperty.stringValue);
+                    directory = Path.GetDirectoryName(_exportPathProperty.stringValue);
+                    fileName = Path.GetFileName(_exportPathProperty.stringValue);
                 }
 
-                exportPathProperty.stringValue = EditorUtility.SaveFilePanel(
+                _exportPathProperty.stringValue = EditorUtility.SaveFilePanel(
                     "GEO File to Export", directory, fileName, HoudiniGeo.Extension);
             }
 

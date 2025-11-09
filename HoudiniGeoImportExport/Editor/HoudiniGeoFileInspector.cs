@@ -16,41 +16,43 @@ namespace Houdini.GeoImportExport
     [CustomEditor(typeof(Object))]
     public class HoudiniGeoFileInspector : Editor
     {
-        private bool isHoudiniGeoFile;
-        private bool fileCheckPerformed;
+        private bool _isHoudiniGeoFile;
+        private bool _fileCheckPerformed;
 
-        private HoudiniGeo houdiniGeo;
-        private Editor houdiniGeoInspector;
+        private HoudiniGeo _houdiniGeo;
+        private Editor _houdiniGeoInspector;
 
         public override void OnInspectorGUI()
         {
-            if (!isHoudiniGeoFile && !fileCheckPerformed)
+            switch (_isHoudiniGeoFile)
             {
-                string assetPath = AssetDatabase.GetAssetPath(target);
-                isHoudiniGeoFile = assetPath.EndsWith("." + HoudiniGeo.Extension);
-                fileCheckPerformed = true;
-            }
-            else if (!isHoudiniGeoFile)
-            {
-                return;
+                case false when !_fileCheckPerformed:
+                {
+                    var assetPath = AssetDatabase.GetAssetPath(target);
+                    _isHoudiniGeoFile = assetPath.EndsWith("." + HoudiniGeo.Extension);
+                    _fileCheckPerformed = true;
+                    break;
+                }
+                case false:
+                    return;
             }
 
-            if (houdiniGeo == null)
+            if (_houdiniGeo == null)
             {
-                string assetPath = AssetDatabase.GetAssetPath(target);
-                string outDir = Path.GetDirectoryName(assetPath);
-                string assetName = Path.GetFileNameWithoutExtension(assetPath);
+                var assetPath = AssetDatabase.GetAssetPath(target);
+                var outDir = Path.GetDirectoryName(assetPath);
+                var assetName = Path.GetFileNameWithoutExtension(assetPath);
 
                 // Parse geo
-                string geoOutputPath = $"{outDir}/{assetName}.asset";
-                houdiniGeo = AssetDatabase.LoadAllAssetsAtPath(geoOutputPath).FirstOrDefault(a => a is HoudiniGeo) as HoudiniGeo;
-                houdiniGeoInspector = CreateEditor(houdiniGeo);
+                var geoOutputPath = $"{outDir}/{assetName}.asset";
+                _houdiniGeo = AssetDatabase.LoadAllAssetsAtPath(geoOutputPath).FirstOrDefault(a => a is HoudiniGeo) as HoudiniGeo;
+                _houdiniGeoInspector = CreateEditor(_houdiniGeo);
             }
 
-            if (houdiniGeoInspector != null)
+            if (_houdiniGeoInspector != null)
             {
                 GUI.enabled = true;
-                houdiniGeoInspector.DrawDefaultInspector();
+                _houdiniGeoInspector.DrawDefaultInspector();
             }
         }
     }

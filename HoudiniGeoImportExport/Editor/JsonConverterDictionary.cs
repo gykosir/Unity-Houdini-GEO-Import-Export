@@ -7,12 +7,13 @@ namespace Newtonsoft.Json
     {
         public override void WriteJson(JsonWriter writer, Dictionary<string, object> value, JsonSerializer serializer)
         {
-            JsonTextWriterAdvanced writerAdvanced = writer as JsonTextWriterAdvanced;
+            if (writer is not JsonTextWriterAdvanced writerAdvanced) 
+                return;
             
             writerAdvanced.WriteStartDictionary();
-            foreach (KeyValuePair<string, object> kvp in value)
+            foreach (var (key, o) in value)
             {
-                writerAdvanced.WriteDictionaryKeyValuePair(kvp.Key, kvp.Value);
+                writerAdvanced.WriteDictionaryKeyValuePair(key, o);
             }
             writerAdvanced.WriteEndDictionary();
         }

@@ -22,9 +22,9 @@ namespace Houdini.GeoImportExport
     {
         private const string PrefabSuffix = ".prefab";
 
-        private static readonly List<string> prefabsThatCouldntBeFound = new List<string>();
+        private static readonly List<string> PrefabsThatCouldntBeFound = new();
 
-        private static Dictionary<string, GameObject> prefabsByName = new Dictionary<string, GameObject>();
+        private static readonly Dictionary<string, GameObject> PrefabsByName = new();
 
         /// <summary>
         /// Takes the point collection, and checks if it specifies a prefab in its name attribute. If so, we spawn
@@ -42,7 +42,7 @@ namespace Houdini.GeoImportExport
             }
 
             // We only want to show a warning once per missing prefab type.
-            prefabsThatCouldntBeFound.Clear();
+            PrefabsThatCouldntBeFound.Clear();
 
             // Now populate the container with instances based on the specified prefabs.
             for (int i = 0; i < pointCollection.Count; i++)
@@ -84,7 +84,7 @@ namespace Houdini.GeoImportExport
             var originalName = name;
 
             // First check if we found that prefab already.
-            var foundAlready = prefabsByName.TryGetValue(originalName, out var prefab);
+            var foundAlready = PrefabsByName.TryGetValue(originalName, out var prefab);
             if (foundAlready)
                 return prefab;
 
@@ -144,15 +144,15 @@ namespace Houdini.GeoImportExport
             // If a valid prefab was found, store it in the dictionary for easy loading later.
             if (prefab != null)
             {
-                prefabsByName.Add(originalName, prefab);
+                PrefabsByName.Add(originalName, prefab);
                 return prefab;
             }
 
             // We only want an error once per prefab name.
-            if (!prefabsThatCouldntBeFound.Contains(originalName))
+            if (!PrefabsThatCouldntBeFound.Contains(originalName))
             {
                 Debug.LogWarning($"Couldn't find prefab by the name of '{originalName}'");
-                prefabsThatCouldntBeFound.Add(originalName);
+                PrefabsThatCouldntBeFound.Add(originalName);
             }
 
             return null;
